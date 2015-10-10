@@ -38,7 +38,7 @@ func (t *TestCase) Execute(resp *httptest.ResponseRecorder) error {
 
 	if t.validContentLength {
 		if t.contentLength != resp.Body.Len() {
-			return fmt.Errorf("should Content-Length %s ≠ %s", t.contentLength, resp.Body.Len())
+			return fmt.Errorf("should Content-Length %d ≠ %d", t.contentLength, resp.Body.Len())
 		}
 	}
 
