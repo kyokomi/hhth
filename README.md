@@ -1,2 +1,14 @@
-# http-handler-test-helper
-http-handler-test-helper for golang
+# hhth
+
+hhth is httpHandler test helper library of the golang.
+
+## TODO
+
+- [ ] test
+- [ ] example
+- [ ] POST
+- [ ] PUT
+- [ ] DELETE
+- [ ] OPTIONS
+
+
