@@ -1,8 +1,6 @@
 package hhth
 
 import (
-	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -26,96 +24,51 @@ var _ HTTPHandlerTestHelper = (*httpHandlerTestHelper)(nil)
 func New(handler http.Handler) HTTPHandlerTestHelper {
 	return &httpHandlerTestHelper{
 		handler: handler,
-		params: handlerTestParams{
-			Headers: map[string]string{},
-			Form:    map[string]string{},
-		},
+		headers: map[string]string{},
+		form:    map[string]string{},
 	}
 }
 
 type httpHandlerTestHelper struct {
-	params  handlerTestParams
 	handler http.Handler
+
+	method  string
+	url     string
+	headers map[string]string
+	form    map[string]string
 }
 
 func (h *httpHandlerTestHelper) Get(urlStr string, testCase TestCase) Response {
-	h.params.Method = "GET"
-	h.params.URL = urlStr
+	h.method = "GET"
+	h.url = urlStr
 	return h.do(testCase, nil)
 }
 
 func (h *httpHandlerTestHelper) Post(urlStr string, bodyType string, body io.Reader, testCase TestCase) Response {
-	h.params.Method = "POST"
-	h.params.URL = urlStr
+	h.method = "POST"
+	h.url = urlStr
 	h.SetHeader("Content-Type", bodyType)
 	return h.do(testCase, body)
 }
 
 func (h *httpHandlerTestHelper) SetHeader(key, value string) {
-	h.params.Headers[key] = value
+	h.headers[key] = value
 }
 
 func (h *httpHandlerTestHelper) SetForm(key, value string) {
-	h.params.Form[key] = value
-}
-
-type handlerTestParams struct {
-	Method  string
-	URL     string
-	Headers map[string]string
-	Form    map[string]string
-}
-
-type Response interface {
-	Error() error
-	String() string
-	JSON(v interface{}) error
-}
-
-type response struct {
-	err      error
-	response *httptest.ResponseRecorder
-}
-
-func (r *response) Error() error {
-	return r.err
-}
-
-func (r *response) Result() (*httptest.ResponseRecorder, error) {
-	return r.response, r.err
-}
-
-func (r *response) String() string {
-	if r.response == nil {
-		return ""
-	}
-	return r.response.Body.String()
-}
-
-func (r *response) JSON(v interface{}) error {
-	if r.err != nil {
-		return r.err
-	}
-	if r.response == nil {
-		return fmt.Errorf("response is nil")
-	}
-
-	if err := json.Unmarshal(r.response.Body.Bytes(), v); err != nil {
-		return err
-	}
-	return nil
+	h.form[key] = value
 }
 
 func (h *httpHandlerTestHelper) do(testCase TestCase, body io.Reader) *response {
 	resp := httptest.NewRecorder()
-	req, err := http.NewRequest(h.params.Method, h.params.URL, body)
+	req, err := http.NewRequest(h.method, h.url, body)
 	if body == nil {
-		for key, val := range h.params.Form {
+		for key, val := range h.form {
 			req.Form.Set(key, val)
 		}
 	}
 
-	for key, val := range h.params.Headers {
+	for key, val := range h.headers {
 		req.Header.Set(key, val)
 	}
 
