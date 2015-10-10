@@ -3,9 +3,9 @@ package hhth
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 )
 
 const (
@@ -13,20 +13,15 @@ const (
 )
 
 type HTTPHandlerTestHelper interface {
-	SetHeader(key, value string) HTTPHandlerTestHelper
-	SetForm(key, value string) HTTPHandlerTestHelper
+	SetHeader(key, value string)
+	SetForm(key, value string)
 
 	// method
-	Get(urlStr string) HTTPHandlerTestDoHelper
+	Get(urlStr string, testCase TestCase) Response
+	Post(urlStr string, bodyType string, body io.Reader, testCase TestCase) Response
 }
 
 var _ HTTPHandlerTestHelper = (*httpHandlerTestHelper)(nil)
-
-type HTTPHandlerTestDoHelper interface {
-	Do(testCase TestCase) Response
-}
-
-var _ HTTPHandlerTestDoHelper = (*httpHandlerTestHelper)(nil)
 
 func New(handler http.Handler) HTTPHandlerTestHelper {
 	return &httpHandlerTestHelper{
@@ -43,24 +38,25 @@ type httpHandlerTestHelper struct {
 	handler http.Handler
 }
 
-func (h *httpHandlerTestHelper) Do(testCase TestCase) Response {
-	return h.do(testCase)
-}
-
-func (h *httpHandlerTestHelper) Get(urlStr string) HTTPHandlerTestDoHelper {
+func (h *httpHandlerTestHelper) Get(urlStr string, testCase TestCase) Response {
 	h.params.Method = "GET"
 	h.params.URL = urlStr
-	return h
+	return h.do(testCase, nil)
 }
 
-func (h *httpHandlerTestHelper) SetHeader(key, value string) HTTPHandlerTestHelper {
+func (h *httpHandlerTestHelper) Post(urlStr string, bodyType string, body io.Reader, testCase TestCase) Response {
+	h.params.Method = "POST"
+	h.params.URL = urlStr
+	h.SetHeader("Content-Type", bodyType)
+	return h.do(testCase, body)
+}
+
+func (h *httpHandlerTestHelper) SetHeader(key, value string) {
 	h.params.Headers[key] = value
-	return h
 }
 
-func (h *httpHandlerTestHelper) SetForm(key, value string) HTTPHandlerTestHelper {
+func (h *httpHandlerTestHelper) SetForm(key, value string) {
 	h.params.Form[key] = value
-	return h
 }
 
 type handlerTestParams struct {
@@ -85,6 +81,10 @@ func (r *response) Error() error {
 	return r.err
 }
 
+func (r *response) Result() (*httptest.ResponseRecorder, error) {
+	return r.response, r.err
+}
+
 func (r *response) String() string {
 	if r.response == nil {
 		return ""
@@ -106,18 +106,17 @@ func (r *response) JSON(v interface{}) error {
 	return nil
 }
 
-func (h *httpHandlerTestHelper) do(testCase TestCase) *response {
+func (h *httpHandlerTestHelper) do(testCase TestCase, body io.Reader) *response {
 	resp := httptest.NewRecorder()
-	req, err := http.NewRequest(h.params.Method, h.params.URL, nil)
-
-	values := url.Values{}
-	for key, val := range h.params.Form {
-		values.Add(key, val)
+	req, err := http.NewRequest(h.params.Method, h.params.URL, body)
+	if body == nil {
+		for key, val := range h.params.Form {
+			req.Form.Set(key, val)
+		}
 	}
-	req.Form = values
 
 	for key, val := range h.params.Headers {
-		req.Header.Add(key, val)
+		req.Header.Set(key, val)
 	}
 
 	if err != nil {

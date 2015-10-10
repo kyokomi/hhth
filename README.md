@@ -4,9 +4,8 @@ hhth is httpHandler test helper library of the golang.
 
 ## TODO
 
-- [ ] test
-- [ ] example
-- [ ] POST
+- [x] test
+- [x] POST
 - [ ] PUT
 - [ ] DELETE
 - [ ] OPTIONS
