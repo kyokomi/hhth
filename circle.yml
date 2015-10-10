@@ -1,0 +1,18 @@
+machine:
+  pre:
+    - wget https://storage.googleapis.com/golang/go1.5.1.linux-amd64.tar.gz
+    - tar zxvf go1.5.1.linux-amd64.tar.gz
+  environment:
+    GOROOT: ${HOME}/go
+    PATH: ${GOROOT}/bin:${PATH}
+    GO15VENDOREXPERIMENT: 1
+  post:
+    - go version
+test:
+  pre:
+    - go get golang.org/x/tools/cmd/cover
+    - go get github.com/mattn/goveralls
+  post:
+    - go vet ./...
+    - go test -v . -coverprofile=c.out
+    - goveralls -v -coverprofile=c.out -service=circle-ci -repotoken $COVERALLS_TOKEN
