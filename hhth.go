@@ -4,6 +4,8 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+
+	"github.com/kyokomi/hhth/testcase"
 )
 
 const (
@@ -15,8 +17,8 @@ type HTTPHandlerTestHelper interface {
 	SetForm(key, value string)
 
 	// method
-	Get(urlStr string, testCase TestCase) Response
-	Post(urlStr string, bodyType string, body io.Reader, testCase TestCase) Response
+	Get(urlStr string, testCases ...testcase.HandlerTestCase) Response
+	Post(urlStr string, bodyType string, body io.Reader, testCases ...testcase.HandlerTestCase) Response
 }
 
 var _ HTTPHandlerTestHelper = (*httpHandlerTestHelper)(nil)
@@ -38,17 +40,17 @@ type httpHandlerTestHelper struct {
 	form    map[string]string
 }
 
-func (h *httpHandlerTestHelper) Get(urlStr string, testCase TestCase) Response {
+func (h *httpHandlerTestHelper) Get(urlStr string, testCases ...testcase.HandlerTestCase) Response {
 	h.method = "GET"
 	h.url = urlStr
-	return h.do(testCase, nil)
+	return h.do(nil, testCases...)
 }
 
-func (h *httpHandlerTestHelper) Post(urlStr string, bodyType string, body io.Reader, testCase TestCase) Response {
+func (h *httpHandlerTestHelper) Post(urlStr string, bodyType string, body io.Reader, testCases ...testcase.HandlerTestCase) Response {
 	h.method = "POST"
 	h.url = urlStr
 	h.SetHeader("Content-Type", bodyType)
-	return h.do(testCase, body)
+	return h.do(body, testCases...)
 }
 
 func (h *httpHandlerTestHelper) SetHeader(key, value string) {
@@ -59,9 +61,13 @@ func (h *httpHandlerTestHelper) SetForm(key, value string) {
 	h.form[key] = value
 }
 
-func (h *httpHandlerTestHelper) do(testCase TestCase, body io.Reader) *response {
+func (h *httpHandlerTestHelper) do(body io.Reader, testCases ...testcase.HandlerTestCase) *response {
 	resp := httptest.NewRecorder()
 	req, err := http.NewRequest(h.method, h.url, body)
+	if err != nil {
+		return &response{err: err, response: nil}
+	}
+
 	if body == nil {
 		for key, val := range h.form {
 			req.Form.Set(key, val)
@@ -72,14 +78,12 @@ func (h *httpHandlerTestHelper) do(testCase TestCase, body io.Reader) *response 
 		req.Header.Set(key, val)
 	}
 
-	if err != nil {
-		return &response{err: err, response: nil}
-	}
-
 	h.handler.ServeHTTP(resp, req)
 
-	if err := testCase.Execute(resp); err != nil {
-		return &response{err: err, response: nil}
+	for _, testCase := range testCases {
+		if err := testCase.Execute(resp); err != nil {
+			return &response{err: err, response: nil}
+		}
 	}
 
 	return &response{err: nil, response: resp}

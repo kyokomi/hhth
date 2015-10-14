@@ -8,13 +8,16 @@ import (
 	"testing"
 
 	"github.com/kyokomi/hhth"
+	"github.com/kyokomi/hhth/testcase"
 )
 
 func TestHogeHandler(t *testing.T) {
 	hhtHelper := hhth.New(http.DefaultServeMux)
 
-	testCase1 := hhth.NewTestCase(http.StatusOK, "text/plain; charset=utf-8")
-	resp := hhtHelper.Get("/hoge", testCase1)
+	resp := hhtHelper.Get("/hoge",
+		testcase.StatusCode(http.StatusOK),
+		testcase.ContentType("text/plain; charset=utf-8"),
+	)
 	if resp.Error() != nil {
 		t.Errorf("error %s", resp.Error())
 	}
@@ -23,9 +26,12 @@ func TestHogeHandler(t *testing.T) {
 
 func TestHogeJSONHandler(t *testing.T) {
 	hhtHelper := hhth.New(http.DefaultServeMux)
-	testCase := hhth.NewTestCase(http.StatusOK, "application/json; charset=UTF-8")
+
 	var resp map[string]interface{}
-	if err := hhtHelper.Get("/hoge.json", testCase).JSON(&resp); err != nil {
+	if err := hhtHelper.Get("/hoge.json",
+		testcase.StatusCode(http.StatusOK),
+		testcase.ContentType("application/json; charset=UTF-8"),
+	).JSON(&resp); err != nil {
 		t.Errorf("error %s", err)
 	}
 	fmt.Println(resp)
@@ -33,9 +39,13 @@ func TestHogeJSONHandler(t *testing.T) {
 
 func TestHogeHeaderHandler(t *testing.T) {
 	hhtHelper := hhth.New(http.DefaultServeMux)
+
 	hhtHelper.SetHeader("X-App-Hoge", "hoge-header")
-	testCase := hhth.NewTestCase(http.StatusOK, "text/plain; charset=utf-8")
-	resp := hhtHelper.Get("/header", testCase)
+
+	resp := hhtHelper.Get("/header",
+		testcase.StatusCode(http.StatusOK),
+		testcase.ContentType("text/plain; charset=utf-8"),
+	)
 	if resp.Error() != nil {
 		t.Errorf("error %s", resp.Error())
 	}
@@ -44,14 +54,16 @@ func TestHogeHeaderHandler(t *testing.T) {
 
 func TestPostHandler(t *testing.T) {
 	hhtHelper := hhth.New(http.DefaultServeMux)
-	testCase := hhth.NewTestCase(http.StatusOK, "text/plain; charset=utf-8")
 
 	formData := url.Values{}
 	formData.Set("name", "hoge")
 	formData.Set("age", "19")
 
-	body := bytes.NewBufferString(formData.Encode())
-	resp := hhtHelper.Post("/post", "application/x-www-form-urlencoded", body, testCase)
+	resp := hhtHelper.Post("/post", "application/x-www-form-urlencoded",
+		bytes.NewBufferString(formData.Encode()),
+		testcase.StatusCode(http.StatusOK),
+		testcase.ContentType("text/plain; charset=utf-8"),
+	)
 	if resp.Error() != nil {
 		t.Errorf("error %s", resp.Error())
 	}
