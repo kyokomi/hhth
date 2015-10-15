@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	"github.com/kyokomi/hhth/testcase"
+	"net/url"
 )
 
 const (
@@ -17,8 +17,8 @@ type HTTPHandlerTestHelper interface {
 	SetForm(key, value string)
 
 	// method
-	Get(urlStr string, testCases ...testcase.HandlerTestCase) Response
-	Post(urlStr string, bodyType string, body io.Reader, testCases ...testcase.HandlerTestCase) Response
+	Get(urlStr string, testCases ...HandlerTestCase) Response
+	Post(urlStr string, bodyType string, body io.Reader, testCases ...HandlerTestCase) Response
 }
 
 var _ HTTPHandlerTestHelper = (*httpHandlerTestHelper)(nil)
@@ -40,13 +40,13 @@ type httpHandlerTestHelper struct {
 	form    map[string]string
 }
 
-func (h *httpHandlerTestHelper) Get(urlStr string, testCases ...testcase.HandlerTestCase) Response {
+func (h *httpHandlerTestHelper) Get(urlStr string, testCases ...HandlerTestCase) Response {
 	h.method = "GET"
 	h.url = urlStr
 	return h.do(nil, testCases...)
 }
 
-func (h *httpHandlerTestHelper) Post(urlStr string, bodyType string, body io.Reader, testCases ...testcase.HandlerTestCase) Response {
+func (h *httpHandlerTestHelper) Post(urlStr string, bodyType string, body io.Reader, testCases ...HandlerTestCase) Response {
 	h.method = "POST"
 	h.url = urlStr
 	h.SetHeader("Content-Type", bodyType)
@@ -61,17 +61,19 @@ func (h *httpHandlerTestHelper) SetForm(key, value string) {
 	h.form[key] = value
 }
 
-func (h *httpHandlerTestHelper) do(body io.Reader, testCases ...testcase.HandlerTestCase) *response {
+func (h *httpHandlerTestHelper) do(body io.Reader, testCases ...HandlerTestCase) *response {
 	resp := httptest.NewRecorder()
 	req, err := http.NewRequest(h.method, h.url, body)
 	if err != nil {
 		return &response{err: err, response: nil}
 	}
 
-	if body == nil {
-		for key, val := range h.form {
-			req.Form.Set(key, val)
-		}
+	if req.Form == nil {
+		req.Form = make(url.Values)
+	}
+
+	for key, val := range h.form {
+		req.Form.Set(key, val)
 	}
 
 	for key, val := range h.headers {
