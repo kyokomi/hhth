@@ -256,5 +256,5 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 
 func renderError(statusCode int, w http.ResponseWriter) {
 	w.WriteHeader(statusCode)
-	w.Write([]byte(http.StatusText(http.StatusMethodNotAllowed)))
+	w.Write([]byte(http.StatusText(statusCode)))
 }
