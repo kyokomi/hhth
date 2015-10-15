@@ -149,7 +149,7 @@ func TestJSONParseError(t *testing.T) {
 
 	resp := hhtHelper.Get("error.json")
 	if resp.Error() != nil {
-		t.Error("error %s", resp.Error())
+		t.Errorf("error %s", resp.Error())
 	}
 
 	var parseJSON map[string]string
