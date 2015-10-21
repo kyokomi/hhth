@@ -66,11 +66,12 @@ import (
 
 func TestHogeHandler(t *testing.T) {
 	hhtHelper := hhth.New(http.DefaultServeMux)
-
-	resp := hhtHelper.Get("/hoge",
+	hhtHelper.SetTestCase(
 		hhth.TestCaseStatusCode(http.StatusOK),
 		hhth.TestCaseContentType("text/plain; charset=utf-8"),
 	)
+	
+	resp := hhtHelper.Get("/hoge")
 	if resp.Error() != nil {
 		t.Errorf("error %s", resp.Error())
 	}
@@ -94,12 +95,13 @@ import (
 
 func TestJSONParse(t *testing.T) {
 	hhtHelper := hhth.New(http.DefaultServeMux)
-
-	var resp map[string]interface{}
-	if err := hhtHelper.Get("/hoge.json",
+	hhtHelper.SetTestCase(
 		hhth.TestCaseStatusCode(http.StatusOK),
 		hhth.TestCaseContentType("application/json; charset=UTF-8"),
-	).JSON(&resp); err != nil {
+	)
+	
+	var resp map[string]interface{}
+	if err := hhtHelper.Get("/hoge.json").JSON(&resp); err != nil {
 		t.Errorf("error %s", err)
 	}
 
