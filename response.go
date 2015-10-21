@@ -12,6 +12,14 @@ type Response interface {
 	JSON(v interface{}) error
 }
 
+func NewResponse(resp *httptest.ResponseRecorder) Response {
+	return &response{err: nil, response: resp}
+}
+
+func NewErrorResponse(err error) Response {
+	return &response{err: err, response: nil}
+}
+
 type response struct {
 	err      error
 	response *httptest.ResponseRecorder

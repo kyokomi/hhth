@@ -5,6 +5,13 @@ import (
 	"net/http/httptest"
 )
 
+type HandlerTestCaseFunc func(*httptest.ResponseRecorder) error
+
+// Execute calls f(resp) error.
+func (f HandlerTestCaseFunc) Execute(resp *httptest.ResponseRecorder) error {
+	return f(resp)
+}
+
 type HandlerTestCase interface {
 	Execute(resp *httptest.ResponseRecorder) error
 }
