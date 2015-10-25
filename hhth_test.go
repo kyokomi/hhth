@@ -7,8 +7,6 @@ import (
 	"net/url"
 	"testing"
 
-	"net/http/httptest"
-
 	"github.com/kyokomi/hhth"
 )
 
@@ -195,24 +193,25 @@ func TestCustomTestCase(t *testing.T) {
 
 func TestCustomTestCaseFunc(t *testing.T) {
 	hhtHelper := hhth.New(http.DefaultServeMux)
-	hhtHelper.SetTestCaseFunc(
-		func(resp *httptest.ResponseRecorder) error {
-			if resp.Header().Get("X-Hoge-Version") != "1.0.0" {
-				return fmt.Errorf("error header version %s", resp.Header().Get("X-Hoge-Version"))
-			}
-			return nil
-		},
-	)
-	hhtHelper.AddTestCaseFunc(func(resp *httptest.ResponseRecorder) error {
-		if resp.Header().Get("Content-Type") != "text/plain; charset=utf-8" {
-			return fmt.Errorf("error header Content-Type %s", resp.Header().Get("Content-Type"))
+	hhtHelper.SetTestCaseFunc(func(resp hhth.Response) error {
+		r, _ := resp.Result()
+		if r.Header().Get("X-Hoge-Version") != "1.0.0" {
+			return fmt.Errorf("error header version %s", r.Header().Get("X-Hoge-Version"))
+		}
+		return nil
+	})
+	hhtHelper.AddTestCaseFunc(func(resp hhth.Response) error {
+		r, _ := resp.Result()
+		if r.Header().Get("Content-Type") != "text/plain; charset=utf-8" {
+			return fmt.Errorf("error header Content-Type %s", r.Header().Get("Content-Type"))
 		}
 		return nil
 	})
 
-	resp := hhtHelper.Get("/hoge", func(resp *httptest.ResponseRecorder) error {
-		if resp.Code != http.StatusOK {
-			return fmt.Errorf("error http code %d", resp.Code)
+	resp := hhtHelper.Get("/hoge", func(resp hhth.Response) error {
+		r, _ := resp.Result()
+		if r.Code != http.StatusOK {
+			return fmt.Errorf("error http code %d", r.Code)
 		}
 		return nil
 	})

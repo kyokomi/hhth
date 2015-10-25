@@ -1,19 +1,16 @@
 package hhth
 
-import (
-	"fmt"
-	"net/http/httptest"
-)
+import "fmt"
 
-type HandlerTestCaseFunc func(*httptest.ResponseRecorder) error
+type HandlerTestCaseFunc func(resp Response) error
 
 // Execute calls f(resp) error.
-func (f HandlerTestCaseFunc) Execute(resp *httptest.ResponseRecorder) error {
+func (f HandlerTestCaseFunc) Execute(resp Response) error {
 	return f(resp)
 }
 
 type HandlerTestCase interface {
-	Execute(resp *httptest.ResponseRecorder) error
+	Execute(resp Response) error
 }
 
 type contentLengthTestCase struct {
@@ -28,9 +25,10 @@ func TestCaseContentLength(contentLength int) HandlerTestCase {
 
 var _ HandlerTestCase = (*contentLengthTestCase)(nil)
 
-func (t *contentLengthTestCase) Execute(resp *httptest.ResponseRecorder) error {
-	if t.contentLength != resp.Body.Len() {
-		return fmt.Errorf("should Content-Length %d ≠ %d", t.contentLength, resp.Body.Len())
+func (t *contentLengthTestCase) Execute(resp Response) error {
+	r, _ := resp.Result()
+	if t.contentLength != r.Body.Len() {
+		return fmt.Errorf("should Content-Length %d ≠ %d", t.contentLength, r.Body.Len())
 	}
 	return nil
 }
@@ -47,9 +45,10 @@ func TestCaseStatusCode(statusCode int) HandlerTestCase {
 
 var _ HandlerTestCase = (*statusCodeTestCase)(nil)
 
-func (t *statusCodeTestCase) Execute(resp *httptest.ResponseRecorder) error {
-	if resp.Code != t.statusCode {
-		return fmt.Errorf("should return HTTP OK %d ≠ %d", resp.Code, t.statusCode)
+func (t *statusCodeTestCase) Execute(resp Response) error {
+	r, _ := resp.Result()
+	if r.Code != t.statusCode {
+		return fmt.Errorf("should return HTTP OK %d ≠ %d", r.Code, t.statusCode)
 	}
 	return nil
 }
@@ -66,8 +65,9 @@ func TestCaseContentType(contentType string) HandlerTestCase {
 
 var _ HandlerTestCase = (*contentTypeTestCase)(nil)
 
-func (t *contentTypeTestCase) Execute(resp *httptest.ResponseRecorder) error {
-	contentType := resp.Header().Get("Content-Type")
+func (t *contentTypeTestCase) Execute(resp Response) error {
+	r, _ := resp.Result()
+	contentType := r.Header().Get("Content-Type")
 	if contentType != t.contentType {
 		return fmt.Errorf("should Content-Type %s ≠ %s", contentType, t.contentType)
 	}
