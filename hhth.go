@@ -113,6 +113,8 @@ func (h *httpHandlerTestHelper) do(body io.Reader, testCases ...HandlerTestCaseF
 
 	h.handler.ServeHTTP(resp, req)
 
+	testResp := NewResponse(resp)
+
 	execTestCases := make([]HandlerTestCase, len(h.testCases), len(h.testCases)+len(testCases))
 	copy(execTestCases, h.testCases)
 	for idx, tc := range testCases {
@@ -120,10 +122,10 @@ func (h *httpHandlerTestHelper) do(body io.Reader, testCases ...HandlerTestCaseF
 	}
 
 	for _, testCase := range execTestCases {
-		if err := testCase.Execute(resp); err != nil {
+		if err := testCase.Execute(testResp); err != nil {
 			return NewErrorResponse(err)
 		}
 	}
 
-	return NewResponse(resp)
+	return testResp
 }
