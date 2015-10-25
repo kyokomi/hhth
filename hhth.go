@@ -22,6 +22,10 @@ type HTTPHandlerTestHelper interface {
 
 	// method
 	Get(urlStr string, testCases ...HandlerTestCaseFunc) Response
+	Head(urlStr string, testCases ...HandlerTestCaseFunc) Response
+	Delete(urlStr string, testCases ...HandlerTestCaseFunc) Response
+	Options(urlStr string, testCases ...HandlerTestCaseFunc) Response
+	Put(urlStr string, bodyType string, body io.Reader, testCases ...HandlerTestCaseFunc) Response
 	Post(urlStr string, bodyType string, body io.Reader, testCases ...HandlerTestCaseFunc) Response
 }
 
@@ -53,6 +57,31 @@ func (h *httpHandlerTestHelper) Get(urlStr string, testCases ...HandlerTestCaseF
 	h.method = "GET"
 	h.url = urlStr
 	return h.do(nil, testCases...)
+}
+
+func (h *httpHandlerTestHelper) Head(urlStr string, testCases ...HandlerTestCaseFunc) Response {
+	h.method = "HEAD"
+	h.url = urlStr
+	return h.do(nil, testCases...)
+}
+
+func (h *httpHandlerTestHelper) Delete(urlStr string, testCases ...HandlerTestCaseFunc) Response {
+	h.method = "DELETE"
+	h.url = urlStr
+	return h.do(nil, testCases...)
+}
+
+func (h *httpHandlerTestHelper) Options(urlStr string, testCases ...HandlerTestCaseFunc) Response {
+	h.method = "OPTIONS"
+	h.url = urlStr
+	return h.do(nil, testCases...)
+}
+
+func (h *httpHandlerTestHelper) Put(urlStr string, bodyType string, body io.Reader, testCases ...HandlerTestCaseFunc) Response {
+	h.method = "PUT"
+	h.url = urlStr
+	h.SetHeader("Content-Type", bodyType)
+	return h.do(body, testCases...)
 }
 
 func (h *httpHandlerTestHelper) Post(urlStr string, bodyType string, body io.Reader, testCases ...HandlerTestCaseFunc) Response {
