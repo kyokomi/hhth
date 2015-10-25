@@ -1,6 +1,7 @@
 package example_test
 
 import (
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -42,4 +43,24 @@ func TestJSONParse(t *testing.T) {
 	if resp["age"].(float64) != 20 {
 		t.Errorf("error json response age != %s", resp["age"])
 	}
+}
+
+func TestOptionsHogeHandler(t *testing.T) {
+	hhtHelper := hhth.New(http.DefaultServeMux)
+	hhtHelper.SetTestCase(
+		hhth.TestCaseStatusCode(http.StatusNoContent),
+		hhth.HandlerTestCaseFunc(func(resp hhth.Response) error {
+			r, _ := resp.Result()
+			if r.Header().Get("Allow") != "GET,HEAD,PUT,POST,DELETE" {
+				return fmt.Errorf("allow header error %s", r.Header().Get("Allow"))
+			}
+			return nil
+		}),
+	)
+
+	resp := hhtHelper.Options("/hoge")
+	if resp.Error() != nil {
+		t.Errorf("error %s", resp.Error())
+	}
+	fmt.Println(resp.String())
 }
